@@ -14,8 +14,7 @@ class Scanner:
         self.current = 0
         self.line = 1
 
-
-    keywords =  {
+    keywords = {
         "and": TokenType.AND,
         "class": TokenType.CLASS,
         "else": TokenType.ELSE,
@@ -114,11 +113,11 @@ class Scanner:
 
         self.add_token(TokenType.NUMBER, float(
             self.source[self.start: self.current]))
-        
+
     def identifier(self):
         while (self.is_alphanumeric(self.peek())):
             self.advance()
-        
+
         text = self.source[self.start: self.current]
         type = Scanner.keywords.get(text, None)
         if (type == None):
@@ -127,10 +126,10 @@ class Scanner:
 
     def is_alpha(self, c):
         return (c >= 'a' and c <= 'z') or (c >= 'A' and c <= 'Z') or c == '_'
-    
+
     def is_alphanumeric(self, c):
         return self.is_alpha(c) or self.is_digit(c)
-        
+
     def peek_next(self) -> str:
         if (self.current + 1 >= len(self.source)):
             return '\0'
