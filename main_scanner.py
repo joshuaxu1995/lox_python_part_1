@@ -1,5 +1,4 @@
 import sys
-from wsgiref.headers import tspecials
 import scanner
 import tokens as ts
 from parser import Parser
