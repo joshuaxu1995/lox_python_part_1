@@ -1,6 +1,7 @@
 
 from cmath import exp
 from tokens import Token, TokenType
+from typing import List
 import main_scanner
 
 
@@ -33,12 +34,13 @@ class Scanner:
         "while": TokenType.WHILE
     }
 
-    def scanTokens(self):
+    def scanTokens(self) -> List[Token]:
         while (not self.is_at_end()):
             self.start = self.current
             self.scan_token()
 
         self.tokens.append(Token(TokenType.EOF, "", None, self.line))
+        return self.tokens
 
     def is_at_end(self) -> bool:
         return self.current >= len(self.source)

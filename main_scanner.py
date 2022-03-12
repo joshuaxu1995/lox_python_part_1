@@ -1,5 +1,9 @@
 import sys
+from wsgiref.headers import tspecials
 import scanner
+import tokens as ts
+from parser import Parser
+import ast_printer
 
 hadError = False
 
@@ -33,8 +37,16 @@ def run_prompt():
 
 def run(lines: str):
     scanner_instance = scanner.Scanner(lines)
-    scanner_instance.scanTokens()
-    print(f'Printing the tokens: {scanner_instance.tokens}')
+    tokens = scanner_instance.scanTokens()
+
+    parser = Parser(tokens)
+
+    expression = parser.parse()
+
+    if (hadError):
+        return
+    
+    print(ast_printer.AstPrinter().print(expression))
 
 
 def error(line: int, message: str) -> None:
@@ -44,6 +56,12 @@ def error(line: int, message: str) -> None:
 def report(line: int, where: str, message: str):
     sys.stderr.write(f'[line + {line} ] Error{where}: {message}')
     hadError = True
+
+def error(token: ts.Token, message: str):
+    if (token == ts.TokenType.EOF):
+        report(token.line, " at end", message)
+    else:
+        report(token.line, " at '" + token.lexeme + "'", message)
 
 if __name__ == "__main__":
     main()
