@@ -16,7 +16,6 @@ def run_file(path: str):
     lines = None
     with open(path) as f:
         lines = f.read()
-        print(lines)
     
     run(lines)
     if (hadError):
@@ -35,6 +34,7 @@ def run_prompt():
 def run(lines: str):
     scanner_instance = scanner.Scanner(lines)
     scanner_instance.scanTokens()
+    print(f'Printing the tokens: {scanner_instance.tokens}')
 
 
 def error(line: int, message: str) -> None:
