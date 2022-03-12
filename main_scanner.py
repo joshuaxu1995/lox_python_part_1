@@ -33,10 +33,8 @@ def run_prompt():
 
 
 def run(lines: str):
-    print(f'Printing lines: {lines}')
     scanner_instance = scanner.Scanner(lines)
     scanner_instance.scanTokens()
-    print(f'The tokens here are {scanner_instance.tokens}')
 
 
 def error(line: int, message: str) -> None:

@@ -110,8 +110,6 @@ class Scanner:
             while (self.is_digit(self.peek)):
                 self.advance()
 
-        print(f'Printing source: {self.source}')
-
         self.add_token(TokenType.NUMBER, float(
             self.source[self.start: self.current]))
         
@@ -120,7 +118,6 @@ class Scanner:
             self.advance()
         
         text = self.source[self.start: self.current]
-        print(f'start {self.start} and current {self.current} and text: {text}')
         type = Scanner.keywords.get(text, None)
         if (type == None):
             type = TokenType.IDENTIFIER
