@@ -1,6 +1,7 @@
 
 from cmath import exp
 from tokens import Token, TokenType
+from typing import List
 import main_scanner
 
 
@@ -13,8 +14,7 @@ class Scanner:
         self.current = 0
         self.line = 1
 
-
-    keywords =  {
+    keywords = {
         "and": TokenType.AND,
         "class": TokenType.CLASS,
         "else": TokenType.ELSE,
@@ -33,12 +33,13 @@ class Scanner:
         "while": TokenType.WHILE
     }
 
-    def scanTokens(self):
+    def scanTokens(self) -> List[Token]:
         while (not self.is_at_end()):
             self.start = self.current
             self.scan_token()
 
         self.tokens.append(Token(TokenType.EOF, "", None, self.line))
+        return self.tokens
 
     def is_at_end(self) -> bool:
         return self.current >= len(self.source)
@@ -112,11 +113,11 @@ class Scanner:
 
         self.add_token(TokenType.NUMBER, float(
             self.source[self.start: self.current]))
-        
+
     def identifier(self):
         while (self.is_alphanumeric(self.peek())):
             self.advance()
-        
+
         text = self.source[self.start: self.current]
         type = Scanner.keywords.get(text, None)
         if (type == None):
@@ -125,10 +126,10 @@ class Scanner:
 
     def is_alpha(self, c):
         return (c >= 'a' and c <= 'z') or (c >= 'A' and c <= 'Z') or c == '_'
-    
+
     def is_alphanumeric(self, c):
         return self.is_alpha(c) or self.is_digit(c)
-        
+
     def peek_next(self) -> str:
         if (self.current + 1 >= len(self.source)):
             return '\0'
