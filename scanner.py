@@ -68,10 +68,10 @@ class Scanner:
             self.add_token(TokenType.STAR)
         elif curr_char == '!':
             self.add_token(TokenType.BANG_EQUAL if self.match(
-                '=') else TokenType.EQUAL_EQUAL)
+                '=') else TokenType.BANG)
         elif curr_char == '=':
             self.add_token(TokenType.EQUAL_EQUAL if self.match(
-                '=') else TokenType.EQUAL_EQUAL)
+                '=') else TokenType.EQUAL)
         elif curr_char == '<':
             self.add_token(TokenType.LESS_EQUAL if self.match(
                 '=') else TokenType.LESS)
@@ -96,7 +96,7 @@ class Scanner:
             elif (self.is_alpha(curr_char)):
                 self.identifier()
             else:
-                main_scanner.error(self.line, "Unexpected character.")
+                main_scanner.error_with_line(self.line, "Unexpected character.")
 
     def is_digit(self, curr_char: str) -> bool:
         return curr_char >= '0' and curr_char <= '9'
@@ -108,7 +108,7 @@ class Scanner:
         if (self.peek() == '.' and self.is_digit(self.peek_next())):
             self.advance()
 
-            while (self.is_digit(self.peek)):
+            while (self.is_digit(self.peek())):
                 self.advance()
 
         self.add_token(TokenType.NUMBER, float(
@@ -142,13 +142,13 @@ class Scanner:
                 self.line += 1
             self.advance()
 
-        if (self.is_at_end):
-            main_scanner.error(self.line, "Unterminated string.")
+        if (self.is_at_end()):
+            main_scanner.error_with_line(self.line, "Unterminated string.")
             return
 
         self.advance()
 
-        value = self.source[self.start + 1, self.current - 1]
+        value = self.source[self.start + 1: self.current - 1]
         self.add_token(TokenType.STRING, value)
 
     def peek(self) -> str:

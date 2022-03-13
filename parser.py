@@ -1,6 +1,10 @@
+from lib2to3.pgen2.parse import ParseError
+from multiprocessing import synchronize
+from tabnanny import check
 import tokens as ts
-from typing import List
+from typing import List, Optional
 import expr
+import stmt
 import main_scanner
 
 class Parser():
@@ -12,14 +16,75 @@ class Parser():
         self.tokens = tokens
         self.current = 0
 
-    def parse(self) -> expr.Expr:
+    def parse(self) -> List[stmt.Stmt]:
+        statements = []
+        while (not self.is_at_end()):
+            statements.append(self.declaration())
+        return statements
+    
+    def declaration(self) -> Optional[stmt.Stmt]:
         try:
-            return self.expression()
-        except Parser.ParseError:
+            if (self.match(ts.TokenType.VAR)):
+                return self.var_declaration()
+            else:
+                return self.statement()
+        except ParseError as e:
+            self.synchronize()
             return None
+        
+    def var_declaration(self) -> stmt.Stmt:
+        name = self.consume(ts.TokenType.IDENTIFIER, "Expect variable name.")
+
+        initializer = None
+        if (self.match(ts.TokenType.EQUAL)):
+            initializer = self.expression()
+        
+        self.consume(ts.TokenType.SEMICOLON, "Expect ';' after variable declaration")
+        return stmt.Var(name, initializer)
+    
+    def statement(self) -> stmt.Stmt:
+        if (self.match(ts.TokenType.PRINT)):
+            return self.print_statement()
+        if (self.match(ts.TokenType.LEFT_BRACE)):
+            return stmt.Block(self.block())
+        
+        return self.expression_statement()
+    
+    def block(self):
+        statements = []
+
+        while (not self.check(ts.TokenType.RIGHT_BRACE) and not self.is_at_end()):
+            statements.append(self.declaration())
+        
+        self.consume(ts.TokenType.RIGHT_BRACE, "Expect '}' after block.")
+        return statements
+
+    def print_statement(self) -> stmt.Stmt:
+        value = self.expression()
+        self.consume(ts.TokenType.SEMICOLON, "Expect ';' after value.")
+        return stmt.Print(value)
+    
+    def expression_statement(self) -> stmt.Stmt:
+        temp_expr = self.expression()
+        self.consume(ts.TokenType.SEMICOLON, "Expect ';' after expression.")
+        return stmt.Expression(temp_expr)
 
     def expression(self) -> expr.Expr:
-        return self.equality()
+        return self.assignment()
+
+    def assignment(self) -> expr.Expr:
+        temp_expr = self.equality()
+
+        if (self.match(ts.TokenType.EQUAL)):
+            equals = self.previous()
+            value = self.assignment()
+
+            if isinstance(temp_expr, expr.Variable):
+                name = temp_expr.name
+                return expr.Assign(name, value)
+            
+            self.error(equals, "Invalid assignment target.")
+        return temp_expr
     
     def equality(self) -> expr.Expr:
         temp_expr = self.comparison()
@@ -100,6 +165,9 @@ class Parser():
         
         if (self.match(ts.TokenType.NUMBER, ts.TokenType.STRING)):
             return expr.Literal(self.previous().literal)
+
+        if (self.match(ts.TokenType.IDENTIFIER)):
+            return expr.Variable(self.previous())
     
         if (self.match(ts.TokenType.LEFT_PAREN)):
             temp_expr = self.expression()

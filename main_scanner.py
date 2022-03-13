@@ -1,5 +1,6 @@
 import sys
 import scanner
+import expr
 import tokens as ts
 from parser import Parser
 import ast_printer
@@ -43,20 +44,20 @@ def run(lines: str):
 
     parser = Parser(tokens)
 
-    expression = parser.parse()
+    statements = parser.parse()
 
     if (had_error):
         return
     
     interpreter = Interpreter()
-    interpreter.interpret(expression)
+    interpreter.interpret(statements)
 
-def error(line: int, message: str) -> None:
+def error_with_line(line: int, message: str) -> None:
     report(line, "", message)
 
 
 def report(line: int, where: str, message: str):
-    sys.stderr.write(f'[line + {line} ] Error{where}: {message}')
+    sys.stderr.write(f'[line {line} ] Error{where}: {message}')
     hadError = True
 
 def error(token: ts.Token, message: str):
