@@ -1,6 +1,3 @@
-from lib2to3.pgen2.parse import ParseError
-from multiprocessing import synchronize
-from tabnanny import check
 import tokens as ts
 from typing import List, Optional
 import expr
@@ -28,7 +25,7 @@ class Parser():
                 return self.var_declaration()
             else:
                 return self.statement()
-        except ParseError as e:
+        except self.ParseError as e:
             self.synchronize()
             return None
         
