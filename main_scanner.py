@@ -3,8 +3,10 @@ import scanner
 import tokens as ts
 from parser import Parser
 import ast_printer
+from interpreter import RuntimeError, Interpreter
 
-hadError = False
+had_error = False
+had_runtime_error = False
 
 def main():
     if (len(sys.argv) > 2):
@@ -21,9 +23,10 @@ def run_file(path: str):
         lines = f.read()
     
     run(lines)
-    if (hadError):
+    if (had_error):
         sys.exit("Error was detected")
-
+    if (had_runtime_error):
+        sys.exit("Runtime error was detected")
 
 def run_prompt():
     while True:
@@ -42,11 +45,11 @@ def run(lines: str):
 
     expression = parser.parse()
 
-    if (hadError):
+    if (had_error):
         return
     
-    print(ast_printer.AstPrinter().print(expression))
-
+    interpreter = Interpreter()
+    interpreter.interpret(expression)
 
 def error(line: int, message: str) -> None:
     report(line, "", message)
@@ -61,6 +64,11 @@ def error(token: ts.Token, message: str):
         report(token.line, " at end", message)
     else:
         report(token.line, " at '" + token.lexeme + "'", message)
+
+def runtime_error(error: RuntimeError):
+    sys.stderr.write(f'{error.message} \n[line {error.token.line}]')
+    had_runtime_error = True
+
 
 if __name__ == "__main__":
     main()
