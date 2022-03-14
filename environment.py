@@ -15,9 +15,7 @@ class Environment():
         
         if (self.enclosing is not None): 
             return self.enclosing.get(name)
-           
-        print("hi")
-        
+                   
         raise runtime_error.RuntimeError(name, "Undefined variable '" + name.lexeme + "'.")
     
     def get_at(self, distance: int, name: ts.Token) -> Any:
