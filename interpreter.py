@@ -1,10 +1,15 @@
+from __future__ import annotations
 from tokenize import Token
+from loc_function import LoxFunction
+from lox_callable import LoxCallable
 import main_scanner
 import expr
+import return_exception_type
 import stmt
 import tokens as ts
 import environment
 from typing import List, Optional, Any
+import time
 
 class RuntimeError(Exception):
     def __init__(self, token: ts.Token, message: str):
@@ -14,7 +19,22 @@ class RuntimeError(Exception):
 class Interpreter(expr.Visitor, stmt.StmtVisitor):
 
     def __init__(self):
-        self.environment = environment.Environment()
+        self.globals = environment.Environment()
+        self.environment = self.globals
+        self.define_clock()
+    
+    class ClockLoxCallable(LoxCallable):    
+        def call(interpreter: Interpreter, arguments: List[Any]) -> Any:
+            return round(time.time() * 1000)
+    
+        def arity() -> int:
+            return 0
+        
+        def to_string() -> str:
+            return "clock: <native fn>"
+
+    def define_clock(self):
+        self.globals.define("clock", self.ClockLoxCallable)
 
     def interpret(self, statements: List[stmt.Stmt]):
         try:
@@ -45,6 +65,11 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
             output_str_list.append(f' {temp_expr.accept(self)}')
         output_str_list.append(")")
         return "".join(output_str_list)
+
+    def visit_function_stmt(self, stmt: stmt.Function) -> None:
+        temp_function = LoxFunction(stmt, self.environment)
+        self.environment.define(stmt.name.lexeme, temp_function)
+        return None
     
     def visit_expression_stmt(self, stmt: stmt.Expression) -> None:
         self.evaluate(stmt.expression)
@@ -54,6 +79,13 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
         value = self.evaluate(stmt.expression)
         print(self.stringify(value))
         return
+
+    def visit_return_stmt(self, stmt: stmt.Return) -> None:
+        value = None
+        if (stmt.value != None):
+            value = self.evaluate(stmt.value)
+        
+        raise return_exception_type.Return(value)
     
     def visit_block_stmt(self, stmt: stmt.Block) -> None:
         self.execute_block(stmt.statements, environment.Environment(self.environment))
@@ -137,6 +169,23 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
                 return left + right
             raise RuntimeError(expr.operator, "Operands must be two numbers or two strings")
             
+    def visit_call_expr(self, expr: expr.Call) -> Any:
+        callee = self.evaluate(expr.callee)
+        arguments = []
+        for argument in expr.arguments:
+            arguments.append(self.evaluate(argument))
+        
+        temp_function = callee
+
+        if (len(arguments) != temp_function.arity()):
+            raise RuntimeError(expr.paren, f'Expected {temp_function.arity()} arguments but got {len(arguments)}.')
+
+        if (not isinstance(callee, LoxCallable)):
+            raise RuntimeError(expr.paren, "can only call functions and classes.")
+
+        return temp_function.call(self, arguments)
+
+
     def is_equal(self, a, b) -> bool:
         if a is None or b is None: 
             return True
