@@ -4,6 +4,7 @@ import stmt
 import return_exception_type
 from typing import Any, List
 
+
 class LoxFunction(LoxCallable):
     def __init__(self, declaration: stmt.Function, closure: Environment):
         self.declaration = declaration
@@ -21,7 +22,6 @@ class LoxFunction(LoxCallable):
 
     def arity(self) -> int:
         return len(self.declaration.params)
-    
+
     def to_string(self) -> str:
         return "<fn {self.declaration.name.lexeme}>"
-

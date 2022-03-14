@@ -96,7 +96,8 @@ class Scanner:
             elif (self.is_alpha(curr_char)):
                 self.identifier()
             else:
-                main_scanner.error_with_line(self.line, "Unexpected character.")
+                main_scanner.error_with_line(
+                    self.line, "Unexpected character.")
 
     def is_digit(self, curr_char: str) -> bool:
         return curr_char >= '0' and curr_char <= '9'
