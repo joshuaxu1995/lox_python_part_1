@@ -1,10 +1,13 @@
+from os import stat
 import sys
 import scanner
 import expr
 import tokens as ts
 from parser import Parser
 import ast_printer
-from interpreter import RuntimeError, Interpreter
+import resolver
+import runtime_error
+from interpreter import Interpreter
 
 had_error = False
 had_runtime_error = False
@@ -45,11 +48,17 @@ def run(lines: str):
     parser = Parser(tokens)
 
     statements = parser.parse()
+    interpreter = Interpreter()
 
     if (had_error):
         return
-    
-    interpreter = Interpreter()
+
+    temp_resolver = resolver.Resolver(interpreter)
+    temp_resolver.resolve(statements)
+
+    if (had_error): 
+        return
+
     interpreter.interpret(statements)
 
 def error_with_line(line: int, message: str) -> None:
@@ -66,7 +75,7 @@ def error(token: ts.Token, message: str):
     else:
         report(token.line, " at '" + token.lexeme + "'", message)
 
-def runtime_error(error: RuntimeError):
+def runtime_error(error: runtime_error.RuntimeError):
     sys.stderr.write(f'{error.message} \n[line {error.token.line}]')
     had_runtime_error = True
 

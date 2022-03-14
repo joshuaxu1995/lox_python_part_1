@@ -18,15 +18,15 @@ class StmtVisitor():
         ...
 
     @abstractmethod
-    def visit_expression_stmt(self, expr):
+    def visit_expression_stmt(self, stmt):
         ...
     
     @abstractmethod
-    def visit_function_stmt(self, expr):
+    def visit_function_stmt(self, stmt):
         ...
     
     @abstractmethod
-    def visit_print_stmt(self, expr):
+    def visit_print_stmt(self, stmt):
         ...
     
     @abstractmethod

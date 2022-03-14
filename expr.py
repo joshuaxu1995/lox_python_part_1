@@ -13,9 +13,12 @@ class Expr(ABC):
 class Visitor():
     
     @abstractmethod
-    def visit_binary_expr(self, expr):
+    def visit_assign_expr(self, expr):
         ...
 
+    @abstractmethod
+    def visit_binary_expr(self, expr):
+        ...
     
     @abstractmethod
     def visit_call_expr(self, expr):
