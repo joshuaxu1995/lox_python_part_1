@@ -22,6 +22,10 @@ class StmtVisitor():
         ...
     
     @abstractmethod
+    def visit_function_stmt(self, expr):
+        ...
+    
+    @abstractmethod
     def visit_print_stmt(self, expr):
         ...
     
@@ -35,6 +39,10 @@ class StmtVisitor():
 
     @abstractmethod
     def visit_while_stmt(self, stmt):
+        ...
+    
+    @abstractmethod
+    def visit_return_stmt(self, stmt):
         ...
 
 
@@ -61,12 +69,29 @@ class Expression(Stmt):
     def accept(self, visitor: StmtVisitor):
         return visitor.visit_expression_stmt(self)
 
+class Function(Stmt):
+    def __init__(self, name: Token, params: List[Token], body: List[Stmt]):
+        self.name = name
+        self.params = params
+        self.body = body
+    
+    def accept(self, visitor: StmtVisitor):
+        return visitor.visit_function_stmt(self)
+
 class Print(Stmt):
     def __init__(self, expression: Expr):
         self.expression = expression
 
     def accept(self, visitor: StmtVisitor):
         return visitor.visit_print_stmt(self)
+
+class Return(Stmt):
+    def __init__(self, keyword: Token, value: Expr):
+        self.keyword = keyword
+        self.value = value
+
+    def accept(self, visitor: StmtVisitor):
+        return visitor.visit_return_stmt(self)
 
 class Var(Stmt):
     def __init__(self, name: Token, initializer: Expr):

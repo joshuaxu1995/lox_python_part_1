@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from tokens import Token
+from typing import List
 
 class Visitor:
     pass
@@ -13,6 +14,11 @@ class Visitor():
     
     @abstractmethod
     def visit_binary_expr(self, expr):
+        ...
+
+    
+    @abstractmethod
+    def visit_call_expr(self, expr):
         ...
     
     @abstractmethod
@@ -43,6 +49,16 @@ class Binary(Expr):
 
     def accept(self, visitor: Visitor):
         return visitor.visit_binary_expr(self)
+
+
+class Call(Expr):
+    def __init__(self, callee: Expr, paren: Token, arguments: List[Expr]):
+        self.callee = callee
+        self.paren = paren
+        self.arguments = arguments
+
+    def accept(self, visitor: Visitor):
+        return visitor.visit_call_expr(self)
 
 class Grouping(Expr):
     def __init__(self, expression: Expr):
