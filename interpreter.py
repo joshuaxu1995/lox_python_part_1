@@ -59,6 +59,19 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
         self.execute_block(stmt.statements, environment.Environment(self.environment))
         return None
 
+    def visit_if_stmt(self, stmt: stmt.If) -> None:
+        if (self.is_truthy(self.evaluate(stmt.condition))):
+            self.execute(stmt.thenBranch)
+        elif (stmt.elseBranch is not None):
+            self.execute(stmt.elseBranch)
+        else:
+            return None
+
+    def visit_while_stmt(self, stmt: stmt.While) -> None:
+        while (self.is_truthy(self.evaluate(stmt.condition))):
+            self.execute(stmt.body)
+        return None
+
     def visit_var_stmt(self, stmt: stmt.Var) -> None:
         value = None
         if (stmt.initializer != None):
@@ -66,9 +79,20 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
         self.environment.define(stmt.name.lexeme, value)
         return None
 
+    def visit_logical_expr(self, expr: expr.Logical):
+        left = self.evaluate(expr.left)
+        if (expr.operator.type == ts.TokenType.OR):
+            if (self.is_truthy(left)):
+                return left
+        else:
+            if (not self.is_truthy(left)):
+                return left
+        
+        return self.evaluate(expr.right)
+
     def visit_assign_expr(self, expr: expr.Assign):
         value = self.evaluate(expr.value)
-        environment.assign(expr.name, value)
+        self.environment.assign(expr.name, value)
         return value
 
     def visit_variable_expr(self, expr: expr.Variable):

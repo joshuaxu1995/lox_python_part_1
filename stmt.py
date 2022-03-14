@@ -29,6 +29,24 @@ class StmtVisitor():
     def visit_var_stmt(self, stmt):
         ...
 
+    @abstractmethod
+    def visit_if_stmt(self, stmt):
+        ...
+
+    @abstractmethod
+    def visit_while_stmt(self, stmt):
+        ...
+
+
+class If(Stmt):
+    def __init__(self, condition: Expr, thenBranch: Stmt, elseBranch: Stmt):
+        self.condition = condition
+        self.thenBranch = thenBranch
+        self.elseBranch = elseBranch
+
+    def accept(self, visitor: StmtVisitor):
+        return visitor.visit_if_stmt(self)
+
 class Block(Stmt):
     def __init__(self, statements: List[Stmt]):
         self.statements = statements
@@ -57,3 +75,11 @@ class Var(Stmt):
 
     def accept(self, visitor: StmtVisitor):
         return visitor.visit_var_stmt(self)
+
+class While(Stmt):
+    def __init__(self, condition: Expr, body: Stmt):
+        self.condition = condition
+        self.body = body
+
+    def accept(self, visitor: StmtVisitor):
+        return visitor.visit_while_stmt(self)

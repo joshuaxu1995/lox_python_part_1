@@ -25,7 +25,7 @@ class Environment():
             self.values[name.lexeme] = value
             return
         
-        if (self.nclosing is not None):
+        if (self.enclosing is not None):
             self.enclosing.assign(name, value)
             return None
 

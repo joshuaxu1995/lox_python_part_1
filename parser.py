@@ -40,12 +40,73 @@ class Parser():
         return stmt.Var(name, initializer)
     
     def statement(self) -> stmt.Stmt:
+        if (self.match(ts.TokenType.FOR)):
+            return self.for_statement()
+        if (self.match(ts.TokenType.IF)):
+            return self.if_statement()
         if (self.match(ts.TokenType.PRINT)):
             return self.print_statement()
+        if (self.match(ts.TokenType.WHILE)):
+            return self.while_statement()
         if (self.match(ts.TokenType.LEFT_BRACE)):
             return stmt.Block(self.block())
         
         return self.expression_statement()
+    
+    def for_statement(self) ->stmt.Stmt:
+        self.consume(ts.TokenType.LEFT_PAREN, "Expect '(' after 'for'.")
+
+        initializer = None
+        if (self.match(ts.TokenType.SEMICOLON)):
+            initializer = None
+        elif (self.match(ts.TokenType.VAR)):
+            initializer = self.var_declaration()
+        else:
+            initializer = self.expression_statement()
+        
+        condition = None
+        if (not self.check(ts.TokenType.SEMICOLON)):
+            condition = self.expression()
+        
+        self.consume(ts.TokenType.SEMICOLON, "Expect ';' after loop condition.")
+
+        increment = None
+        if (not self.check(ts.TokenType.RIGHT_PAREN)):
+            increment = self.expression()
+        
+        self.consume(ts.TokenType.RIGHT_PAREN, "Expect ')' after for clauses.")
+        body = self.statement()
+
+        if (increment is not None):
+            body = stmt.Block([body, stmt.Expression(increment)])
+        
+        if condition is None:
+            condition = expr.Literal(True)
+        body = stmt.While(condition, body)
+
+        if initializer is not None:
+            body = stmt.Block([initializer, body])
+
+        return body
+
+    def while_statement(self) -> stmt.Stmt:
+        self.consume(ts.TokenType.LEFT_PAREN, "Expect '(' after 'while'.")
+        condition = self.expression()
+        self.consume(ts.TokenType.RIGHT_PAREN, "Expect ')' after condition.")
+        body = self.statement()
+
+        return stmt.While(condition, body)
+
+    def if_statement(self) -> stmt.Stmt:
+        self.consume(ts.TokenType.LEFT_PAREN, "Expect '(' after 'if.")
+        condition = self.expression()
+        self.consume(ts.TokenType.RIGHT_PAREN, "Expect ')' after if condition.")
+
+        thenBranch = self.statement()
+        elseBranch = None
+        if (self.match(ts.TokenType.ELSE)):
+            elseBranch = self.statement()
+        return stmt.If(condition, thenBranch, elseBranch)
     
     def block(self):
         statements = []
@@ -70,7 +131,7 @@ class Parser():
         return self.assignment()
 
     def assignment(self) -> expr.Expr:
-        temp_expr = self.equality()
+        temp_expr = self.or_expr()
 
         if (self.match(ts.TokenType.EQUAL)):
             equals = self.previous()
@@ -83,6 +144,24 @@ class Parser():
             self.error(equals, "Invalid assignment target.")
         return temp_expr
     
+    def or_expr(self) -> expr.Expr:
+        temp_expr = self.and_expr()
+
+        while (self.match(ts.TokenType.OR)):
+            operator = self.previous()
+            right = self.and_expr()
+            temp_expr = expr.Logical(temp_expr, operator, right)
+        return temp_expr
+
+    def and_expr(self) -> expr.Expr:
+        temp_expr = self.equality()
+
+        while (self.match(ts.TokenType.AND)):
+            operator = self.previous()
+            right = self.equality()
+            temp_expr = expr.Logical(temp_expr, operator, right)
+        return temp_expr
+
     def equality(self) -> expr.Expr:
         temp_expr = self.comparison()
         while (self.match(ts.TokenType.BANG_EQUAL, ts.TokenType.EQUAL_EQUAL)):
@@ -183,7 +262,7 @@ class Parser():
         main_scanner.error(token, message)
         return Parser.ParseError() 
 
-    def sychronize(self):
+    def synchronize(self):
         self.advance()
         while (not self.is_at_end):
             if (self.previous().type == ts.TokenType.SEMICOLON):
