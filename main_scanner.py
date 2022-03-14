@@ -1,7 +1,5 @@
-from os import stat
 import sys
 import scanner
-import expr
 import tokens as ts
 from parser import Parser
 import ast_printer
