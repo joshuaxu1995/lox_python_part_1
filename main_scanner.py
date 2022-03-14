@@ -38,7 +38,6 @@ def run_prompt():
         if data == None:
             break
         run(data)
-        hadError = False
 
 
 def run(lines: str):
@@ -68,7 +67,6 @@ def error_with_line(line: int, message: str) -> None:
 
 def report(line: int, where: str, message: str):
     sys.stderr.write(f'[line {line} ] Error{where}: {message}')
-    hadError = True
 
 
 def error(token: ts.Token, message: str):
@@ -80,7 +78,6 @@ def error(token: ts.Token, message: str):
 
 def runtime_error(error: runtime_error.RuntimeError):
     sys.stderr.write(f'{error.message} \n[line {error.token.line}]')
-    had_runtime_error = True
 
 
 if __name__ == "__main__":

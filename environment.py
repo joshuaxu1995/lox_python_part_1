@@ -1,5 +1,4 @@
 from __future__ import annotations
-from dis import dis
 import tokens as ts
 import runtime_error
 from typing import Any
