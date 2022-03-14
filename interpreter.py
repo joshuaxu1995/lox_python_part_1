@@ -11,6 +11,7 @@ import runtime_error
 from typing import List, Optional, Any
 import time
 
+
 class Interpreter(expr.Visitor, stmt.StmtVisitor):
 
     def __init__(self):
@@ -18,14 +19,14 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
         self.environment = self.globals
         self.define_clock()
         self.locals = {}
-    
-    class ClockLoxCallable(LoxCallable):    
+
+    class ClockLoxCallable(LoxCallable):
         def call(interpreter: Interpreter, arguments: List[Any]) -> Any:
             return round(time.time() * 1000)
-    
+
         def arity() -> int:
             return 0
-        
+
         def to_string() -> str:
             return "clock: <native fn>"
 
@@ -38,10 +39,10 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
                 self.execute(statement)
         except RuntimeError as e:
             main_scanner.runtime_error(e)
-    
+
     def execute(self, stmt: stmt.Stmt) -> None:
         stmt.accept(self)
-    
+
     def resolve(self, expr: expr.Expr, depth: int) -> None:
         self.locals[expr] = depth
 
@@ -53,7 +54,7 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
                 self.execute(statement)
         finally:
             self.environment = previous
-    
+
     def print(self, expr: expr.Expr) -> str:
         return expr.accept(self)
 
@@ -69,11 +70,11 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
         temp_function = LoxFunction(stmt, self.environment)
         self.environment.define(stmt.name.lexeme, temp_function)
         return None
-    
+
     def visit_expression_stmt(self, stmt: stmt.Expression) -> None:
         self.evaluate(stmt.expression)
         return
-    
+
     def visit_print_stmt(self, stmt: stmt.Print) -> None:
         value = self.evaluate(stmt.expression)
         print(self.stringify(value))
@@ -83,11 +84,12 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
         value = None
         if (stmt.value != None):
             value = self.evaluate(stmt.value)
-        
+
         raise return_exception_type.Return(value)
-    
+
     def visit_block_stmt(self, stmt: stmt.Block) -> None:
-        self.execute_block(stmt.statements, environment.Environment(self.environment))
+        self.execute_block(
+            stmt.statements, environment.Environment(self.environment))
         return None
 
     def visit_if_stmt(self, stmt: stmt.If) -> None:
@@ -118,12 +120,12 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
         else:
             if (not self.is_truthy(left)):
                 return left
-        
+
         return self.evaluate(expr.right)
 
     def visit_assign_expr(self, expr: expr.Assign):
         value = self.evaluate(expr.value)
-        
+
         distance = self.locals.get(expr)
         if (distance is not None):
             self.environment.assign_at(distance, expr.name, value)
@@ -134,7 +136,7 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
 
     def visit_variable_expr(self, expr: expr.Variable):
         return self.look_up_variable(expr.name, expr)
-    
+
     def look_up_variable(self, name: ts.Token, expr: expr.Expr) -> Any:
         distance = self.locals.get(expr)
         if (distance != None):
@@ -175,36 +177,38 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
             return float(left) * float(right)
         elif expr.operator.type == ts.TokenType.PLUS:
             if (isinstance(left, float) or isinstance(left, int)) \
-             and (isinstance(right, float) or isinstance(right, int)):
+                    and (isinstance(right, float) or isinstance(right, int)):
                 return float(left) + float(right)
             elif isinstance(left, str) and isinstance(right, str):
                 return left + right
-            raise runtime_error.RuntimeError(expr.operator, "Operands must be two numbers or two strings")
-            
+            raise runtime_error.RuntimeError(
+                expr.operator, "Operands must be two numbers or two strings")
+
     def visit_call_expr(self, expr: expr.Call) -> Any:
         callee = self.evaluate(expr.callee)
         arguments = []
         for argument in expr.arguments:
             arguments.append(self.evaluate(argument))
-        
+
         temp_function = callee
 
         if (len(arguments) != temp_function.arity()):
-            raise runtime_error.RuntimeError(expr.paren, f'Expected {temp_function.arity()} arguments but got {len(arguments)}.')
+            raise runtime_error.RuntimeError(
+                expr.paren, f'Expected {temp_function.arity()} arguments but got {len(arguments)}.')
 
         if (not isinstance(callee, LoxCallable)):
-            raise runtime_error.RuntimeError(expr.paren, "can only call functions and classes.")
+            raise runtime_error.RuntimeError(
+                expr.paren, "can only call functions and classes.")
 
         return temp_function.call(self, arguments)
 
-
     def is_equal(self, a, b) -> bool:
-        if a is None or b is None: 
+        if a is None or b is None:
             return True
-        
+
         if a is None:
             return False
-        
+
         return a == b
 
     def stringify(self, object) -> Optional[str]:
@@ -214,7 +218,7 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
 
     def visit_grouping_expr(self, expr: expr.Grouping) -> str:
         return self.evaluate(expr.expression)
-    
+
     def evaluate(self, expr: expr.Expr) -> Any:
         return expr.accept(self)
 
@@ -230,7 +234,7 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
             return -right
         else:
             return None
-    
+
     def check_number_operand(self, operator: ts.Token, operand):
         if isinstance(operand, int) or isinstance(operand, float):
             return
@@ -238,10 +242,9 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
 
     def check_number_operands(self, operator: ts.Token, left, right):
         if isinstance(left, int) or isinstance(left, float) and \
-        isinstance(right, int) or isinstance(right, float):
+                isinstance(right, int) or isinstance(right, float):
             return
         raise runtime_error.RuntimeError(operator, "Operands must be numbers")
 
-    
     def is_truthy(self, object: Any) -> bool:
         return bool(object)

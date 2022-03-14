@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class TokenType(Enum):
     LEFT_PAREN = 1
     RIGHT_PAREN = 2
@@ -7,11 +8,11 @@ class TokenType(Enum):
     RIGHT_BRACE = 4
     COMMA = 5
     DOT = 6
-    MINUS = 7 
-    PLUS = 8 
+    MINUS = 7
+    PLUS = 8
     SEMICOLON = 9
-    SLASH = 10 
-    STAR = 11 
+    SLASH = 10
+    STAR = 11
     BANG = 12
     BANG_EQUAL = 13
     EQUAL = 14
@@ -40,6 +41,7 @@ class TokenType(Enum):
     VAR = 37
     WHILE = 38
     EOF = 39
+
 
 class Token():
     def __init__(self, type: TokenType, lexeme: str, literal, line: int):
