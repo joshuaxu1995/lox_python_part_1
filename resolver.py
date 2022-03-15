@@ -75,9 +75,9 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
 
     def visit_if_stmt(self, stmt: stmt.If):
         self.resolve_expr(stmt.condition)
-        self.resolve(stmt.thenBranch)
+        self.resolve_stmt(stmt.thenBranch)
         if (stmt.elseBranch is not None):
-            self.resolve(stmt.elseBranch)
+            self.resolve_stmt(stmt.elseBranch)
         return None
 
     def visit_print_stmt(self, stmt: stmt.Print):
@@ -92,12 +92,12 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
         if (stmt.value is not None):
             if (self.current_function == FunctionType.INITIALIZER):
                 main_scanner.error(stmt.keyword, "Can't return a value from an initializer.")
-            self.resolve(stmt.value)
+            self.resolve_expr(stmt.value)
         return None
 
     def visit_while_stmt(self, stmt: stmt.While):
         self.resolve_expr(stmt.condition)
-        self.resolve(stmt.body)
+        self.resolve_stmt(stmt.body)
         return None
 
     def visit_binary_expr(self, expr: expr.Binary):
