@@ -13,7 +13,12 @@ from tokens import Token
 class FunctionType(enum.Enum):
     NONE = 0
     FUNCTION = 1
+    INITIALIZER = 2
+    METHOD = 3
 
+class ClassType(enum.Enum):
+    NONE = 0
+    CLASS = 1
 
 class Resolver(expr.Visitor, stmt.StmtVisitor):
 
@@ -21,11 +26,34 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
         self.interpreter = interpreter
         self.scopes = collections.deque()
         self.current_function = FunctionType.NONE
+        self.current_class = ClassType.NONE
 
     def visit_block_stmt(self, stmt: stmt.Block) -> None:
         self.begin_scope()
         self.resolve(stmt.statements)
         self.end_scope()
+        return None
+    
+    def visit_class_stmt(self, stmt: stmt.Class) -> None:
+        enclosing_class = self.current_class
+        self.current_class = ClassType.CLASS
+
+        self.declare(stmt.name)
+        self.define(stmt.name)
+
+        self.begin_scope()
+        self.scopes[-1]["this"] = True
+
+        for method in stmt.methods:
+            declaration = FunctionType.METHOD
+            if (method.name.lexeme == "init"):
+                declaration = FunctionType.INITIALIZER
+
+            self.resolve_function(method, declaration)
+    
+        self.end_scope()
+
+        self.current_class = enclosing_class
         return None
 
     def visit_expression_stmt(self, stmt: stmt.Expression):
@@ -48,6 +76,8 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
                 stmt.keyword, "Can't return from top-level code.")
 
         if (stmt.value is not None):
+            if (self.current_function == FunctionType.INITIALIZER):
+                main_scanner.error(stmt.keyword, "Can't return a value from an initializer.")
             self.resolve(stmt.value)
         return None
 
@@ -65,6 +95,10 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
         for argument in expr.arguments:
             self.resolve_expr(argument)
         self.resolve_expr(expr.callee)
+    
+    def visit_get_expr(self, expr: expr.Get):
+        self.resolve_expr(expr.object)
+        return None
 
     def visit_grouping_expr(self, expr: expr.Grouping):
         self.resolve_expr(expr.expression)
@@ -74,8 +108,21 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
         return None
 
     def visit_logical_expr(self, expr: expr.Logical):
-        self.resolve(expr.left)
-        self.resolve(expr.right)
+        self.resolve_expr(expr.left)
+        self.resolve_expr(expr.right)
+        return None
+
+    def visit_set_expr(self, expr: expr.Set):
+        self.resolve_expr(expr.value)
+        self.resolve_expr(expr.object)
+        return None
+
+    def visit_this_expr(self, expr: expr.This):
+        if (self.current_class is ClassType.NONE):
+            main_scanner.error(expr.keyword, "Can't use 'this' outside of a class.")
+            return None
+
+        self.resolve_local(expr, expr.keyword)
         return None
 
     def visit_unary_expr(self, expr: expr.Unary):

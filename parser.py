@@ -1,3 +1,5 @@
+from telnetlib import DO
+from tokenize import Token
 import tokens as ts
 from typing import List, Optional
 import expr
@@ -22,7 +24,9 @@ class Parser():
 
     def declaration(self) -> Optional[stmt.Stmt]:
         try:
-            if (self.match(ts.TokenType.FUN)):
+            if (self.match(ts.TokenType.CLASS)):
+                return self.class_declaration()
+            elif (self.match(ts.TokenType.FUN)):
                 return self.function_declaration("function")
             elif (self.match(ts.TokenType.VAR)):
                 return self.var_declaration()
@@ -31,6 +35,17 @@ class Parser():
         except self.ParseError as e:
             self.synchronize()
             return None
+    
+    def class_declaration(self) -> stmt.Stmt:
+        name = self.consume(ts.TokenType.IDENTIFIER, "Expect class name.")
+        self.consume(ts.TokenType.LEFT_BRACE, "Expect '{' before class body.")
+
+        methods = []
+        while (not self.check(ts.TokenType.RIGHT_BRACE) and not self.is_at_end()):
+            methods.append(self.function_declaration("method"))
+        
+        self.consume(ts.TokenType.RIGHT_BRACE, "Expect '}' after class body.")
+        return stmt.Class(name, methods)
 
     def function_declaration(self, kind: str) -> stmt.Function:
         name = self.consume(ts.TokenType.IDENTIFIER, "Expect {kind} name.")
@@ -177,6 +192,10 @@ class Parser():
             if isinstance(temp_expr, expr.Variable):
                 name = temp_expr.name
                 return expr.Assign(name, value)
+            
+            if isinstance(temp_expr, expr.Set):
+                get_expr = temp_expr
+                return expr.Set(get_expr, get_expr.name, value)
 
             self.error(equals, "Invalid assignment target.")
         return temp_expr
@@ -274,6 +293,9 @@ class Parser():
         while True:
             if self.match(ts.TokenType.LEFT_PAREN):
                 temp_expr = self.finish_call(temp_expr)
+            elif self.match(ts.TokenType.DOT):
+                name = self.consume(ts.TokenType.IDENTIFIER, "Expect property name after '.'.")
+                temp_expr = expr.Get(temp_expr, name)
             else:
                 break
         return temp_expr
@@ -303,6 +325,9 @@ class Parser():
 
         if (self.match(ts.TokenType.NUMBER, ts.TokenType.STRING)):
             return expr.Literal(self.previous().literal)
+        
+        if (self.match(ts.TokenType.THIS)):
+            return expr.This(self.previous())
 
         if (self.match(ts.TokenType.IDENTIFIER)):
             return expr.Variable(self.previous())
@@ -315,7 +340,7 @@ class Parser():
 
         raise self.error(self.peek(), "Expect expression.")
 
-    def consume(self, type: ts.TokenType, message: str):
+    def consume(self, type: ts.TokenType, message: str) -> None:
         if self.check(type):
             return self.advance()
 
@@ -325,7 +350,7 @@ class Parser():
         main_scanner.error(token, message)
         return Parser.ParseError()
 
-    def synchronize(self):
+    def synchronize(self) -> None:
         self.advance()
         while (not self.is_at_end):
             if (self.previous().type == ts.TokenType.SEMICOLON):

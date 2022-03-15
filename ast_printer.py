@@ -1,4 +1,3 @@
-from distutils.util import execute
 import expr
 import tokens
 
