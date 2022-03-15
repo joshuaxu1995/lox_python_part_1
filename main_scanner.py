@@ -2,7 +2,7 @@ import sys
 import scanner
 import tokens as ts
 from parser import Parser
-import ast_printer
+import side_code_gen.ast_printer as ast_printer
 import resolver
 import runtime_error
 from interpreter import Interpreter

@@ -9,14 +9,18 @@ if TYPE_CHECKING:
     import interpreter
 
 class LoxClass(LoxCallable):
-    def __init__(self, name: str, methods: Dict):
+    def __init__(self, name: str, superclass: LoxClass, methods: Dict):
         self.name = name
+        self.superclass = superclass
         self.methods = methods
     
     def find_method(self, name: str):
         if name in self.methods:
             return self.methods[name]
         
+        if self.superclass is not None:
+            return self.superclass.find_method(name)
+
         return None
 
     def __repr__(self) -> str:
