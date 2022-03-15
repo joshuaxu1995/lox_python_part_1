@@ -1,6 +1,8 @@
 from __future__ import annotations
-from loc_function import LoxFunction
+from lox_function import LoxFunction
 from lox_callable import LoxCallable
+from lox_class import LoxClass
+from lox_instance import LoxInstance
 import main_scanner
 import expr
 import return_exception_type
@@ -67,7 +69,7 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
         return "".join(output_str_list)
 
     def visit_function_stmt(self, stmt: stmt.Function) -> None:
-        temp_function = LoxFunction(stmt, self.environment)
+        temp_function = LoxFunction(stmt, self.environment, False)
         self.environment.define(stmt.name.lexeme, temp_function)
         return None
 
@@ -91,6 +93,17 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
         self.execute_block(
             stmt.statements, environment.Environment(self.environment))
         return None
+
+    def visit_class_stmt(self, stmt: stmt.Class) -> None:
+        self.environment.define(stmt.name.lexeme, None)
+
+        methods = {}
+        for method in stmt.methods:
+            temp_function = LoxFunction(method, self.environment, method.name.lexeme == "init")
+            methods[method.name.lexeme] = temp_function
+        
+        klass = LoxClass(stmt.name.lexeme, methods)
+        self.environment.assign(stmt.name, klass)
 
     def visit_if_stmt(self, stmt: stmt.If) -> None:
         if (self.is_truthy(self.evaluate(stmt.condition))):
@@ -201,6 +214,13 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
                 expr.paren, "can only call functions and classes.")
 
         return temp_function.call(self, arguments)
+    
+    def visit_get_expr(self, expr: expr.Get) -> Any:
+        object = self.evaluate(expr.object)
+        if isinstance(object, LoxInstance):
+            return object.get(expr.name)
+        
+        raise runtime_error.RuntimeError(expr.name, "Only instances have properties.")
 
     def is_equal(self, a, b) -> bool:
         if a is None or b is None:
@@ -224,6 +244,17 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
 
     def visit_literal_expr(self, expr: expr.Literal) -> str:
         return expr.value
+    
+    def visit_set_expr(self, expr: expr.Set) -> Any:
+        object = self.evaluate(expr.object)
+        if not isinstance(object, LoxInstance):
+            raise runtime_error.RuntimeError(expr.name, "Only instances have fields.")
+        
+        value = self.evaluate(expr.value)
+        object.set(expr.name, value)
+    
+    def visit_this_expr(self, expr: expr.This) -> Any:
+        return self.look_up_variable(expr.keyword, expr)
 
     def visit_unary_expr(self, expr: expr.Unary) -> Optional[str]:
         right = self.evaluate(expr.right)

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from abc import ABC, abstractmethod
 from tokens import Token
 from expr import Expr
@@ -18,6 +19,10 @@ class StmtVisitor():
 
     @abstractmethod
     def visit_block_stmt(self, stmt):
+        ...
+
+    @abstractmethod
+    def visit_class_stmt(self, stmt):
         ...
 
     @abstractmethod
@@ -65,6 +70,15 @@ class Block(Stmt):
 
     def accept(self, visitor: StmtVisitor):
         return visitor.visit_block_stmt(self)
+
+
+class Class(Stmt):
+    def __init__(self, name: Token, methods: List[Function]):
+        self.name = name
+        self.methods = methods
+
+    def accept(self, visitor: StmtVisitor):
+        return visitor.visit_class_stmt(self)
 
 
 class Expression(Stmt):
