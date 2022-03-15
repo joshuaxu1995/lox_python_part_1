@@ -1,7 +1,6 @@
 import enum
 import expr
 import stmt
-import environment
 import interpreter
 import collections
 import main_scanner
@@ -178,13 +177,13 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
         self.end_scope()
         self.current_function = enclosing_function
 
-    def begin_scope(self):
+    def begin_scope(self) -> None:
         self.scopes.append({})
 
-    def end_scope(self):
+    def end_scope(self) -> None:
         self.scopes.pop()
 
-    def declare(self, name: Token):
+    def declare(self, name: Token) -> None:
         if (not len(self.scopes)):
             return
         curr_scope = self.scopes[-1]
@@ -195,7 +194,7 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
 
         curr_scope[name.lexeme] = False
 
-    def define(self, name: Token):
+    def define(self, name: Token) -> None:
         if (not len(self.scopes)):
             return
         self.scopes[-1][name.lexeme] = True
