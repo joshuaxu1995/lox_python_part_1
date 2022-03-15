@@ -95,14 +95,30 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
         return None
 
     def visit_class_stmt(self, stmt: stmt.Class) -> None:
+        superclass = None
+        if (stmt.superclass is not None):
+            superclass = self.evaluate(stmt.superclass)
+            if not isinstance(superclass, LoxClass):
+                raise runtime_error.RuntimeError(stmt.superclass.name,
+                    "Superclass must be a class.")
+
+
         self.environment.define(stmt.name.lexeme, None)
+
+        if (stmt.superclass is not None):
+            self.environment = environment.Environment(self.environment)
+            self.environment.define("super", superclass)
 
         methods = {}
         for method in stmt.methods:
             temp_function = LoxFunction(method, self.environment, method.name.lexeme == "init")
             methods[method.name.lexeme] = temp_function
         
-        klass = LoxClass(stmt.name.lexeme, methods)
+        klass = LoxClass(stmt.name.lexeme, superclass, methods)
+
+        if (superclass is not None):
+            self.environment = self.environment.enclosing
+
         self.environment.assign(stmt.name, klass)
 
     def visit_if_stmt(self, stmt: stmt.If) -> None:
@@ -252,6 +268,18 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
         
         value = self.evaluate(expr.value)
         object.set(expr.name, value)
+
+    def visit_super_expr(self, expr: expr.Super) -> Any:
+        distance = self.locals.get(expr)
+        superclass = self.environment.get_at(distance, ts.Token(ts.TokenType.SUPER, "super", "DUMMY", -1))
+
+        object = self.environment.get_at(distance - 1, ts.Token(ts.TokenType.THIS, "this", "DUMMY", -1))
+        method = superclass.find_method(expr.method.lexeme)
+
+        if method is None:
+            raise runtime_error.RuntimeError(expr.method, "Undefined property '" + expr.method.lexeme + "'.")
+
+        return method.bind(object)
     
     def visit_this_expr(self, expr: expr.This) -> Any:
         return self.look_up_variable(expr.keyword, expr)
