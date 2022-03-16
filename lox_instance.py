@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     import lox_class
 
 
-class LoxInstance():
+class LoxInstance:
     def __init__(self, klass: lox_class.LoxClass):
         self.klass = klass
         self.fields = {}
@@ -16,7 +16,7 @@ class LoxInstance():
         return self.klass.name + " instance"
 
     def get(self, name: ts.Token) -> Any:
-        if (self.fields.get(name.lexeme) is not None):
+        if self.fields.get(name.lexeme) is not None:
             return self.fields.get(name.lexeme)
 
         method = self.klass.find_method(name.lexeme)
@@ -24,7 +24,8 @@ class LoxInstance():
             return method.bind(self)
 
         raise runtime_error.RuntimeError(
-            self.name, "Undefined property '" + name.lexeme + "'.")
+            self.name, "Undefined property '" + name.lexeme + "'."
+        )
 
     def set(self, name: ts.Token, value: Any) -> Any:
         self.fields[name.lexeme] = value

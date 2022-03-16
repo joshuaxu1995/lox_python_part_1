@@ -13,8 +13,7 @@ class Expr(ABC):
         ...
 
 
-class Visitor():
-
+class Visitor:
     @abstractmethod
     def visit_assign_expr(self, expr):
         ...

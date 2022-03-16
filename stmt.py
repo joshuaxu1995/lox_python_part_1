@@ -15,8 +15,7 @@ class Stmt(ABC):
         ...
 
 
-class StmtVisitor():
-
+class StmtVisitor:
     @abstractmethod
     def visit_block_stmt(self, stmt):
         ...
@@ -73,11 +72,7 @@ class Block(Stmt):
 
 
 class Class(Stmt):
-    def __init__(
-            self,
-            name: Token,
-            superclass: Variable,
-            methods: List[Function]):
+    def __init__(self, name: Token, superclass: Variable, methods: List[Function]):
         self.name = name
         self.superclass = superclass
         self.methods = methods

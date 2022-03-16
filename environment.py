@@ -5,7 +5,7 @@ import runtime_error
 from typing import Any
 
 
-class Environment():
+class Environment:
     def __init__(self, enclosing: Environment = None):
         self.enclosing = enclosing
         self.values = {}
@@ -14,11 +14,12 @@ class Environment():
         if name.lexeme in self.values:
             return self.values[name.lexeme]
 
-        if (self.enclosing is not None):
+        if self.enclosing is not None:
             return self.enclosing.get(name)
 
         raise runtime_error.RuntimeError(
-            name, "Undefined variable '" + name.lexeme + "'.")
+            name, "Undefined variable '" + name.lexeme + "'."
+        )
 
     def get_at(self, distance: int, name: ts.Token) -> Any:
         return self.ancestor(distance).get(name)
@@ -37,13 +38,14 @@ class Environment():
         self.values[name] = value
 
     def assign(self, name: ts.Token, value: Any) -> None:
-        if (name.lexeme in self.values):
+        if name.lexeme in self.values:
             self.values[name.lexeme] = value
             return
 
-        if (self.enclosing is not None):
+        if self.enclosing is not None:
             self.enclosing.assign(name, value)
             return None
 
         raise runtime_error.RuntimeError(
-            name, "Undefined variable '" + name.lexeme + "'.")
+            name, "Undefined variable '" + name.lexeme + "'."
+        )

@@ -8,9 +8,9 @@ class AstPrinter(expr.Visitor):
 
     def parenthesize(self, name: str, *expr_args) -> str:
         output_str_list = []
-        output_str_list.append(f'({name}')
+        output_str_list.append(f"({name}")
         for temp_expr in expr_args:
-            output_str_list.append(f' {temp_expr.accept(self)}')
+            output_str_list.append(f" {temp_expr.accept(self)}")
         output_str_list.append(")")
         return "".join(output_str_list)
 
@@ -21,7 +21,7 @@ class AstPrinter(expr.Visitor):
         return self.parenthesize("group", expr.expression)
 
     def visit_literal_expr(self, expr: expr.Literal) -> str:
-        if (expr.value is None):
+        if expr.value is None:
             return None
         return expr.value
 
@@ -31,13 +31,14 @@ class AstPrinter(expr.Visitor):
 
 def execute_test():
     expression = expr.Binary(
-        expr.Unary(tokens.Token(tokens.TokenType.MINUS, "-", None, 1),
-                   expr.Literal(123)),
+        expr.Unary(
+            tokens.Token(tokens.TokenType.MINUS, "-", None, 1), expr.Literal(123)
+        ),
         tokens.Token(tokens.TokenType.STAR, "*", None, 1),
-        expr.Grouping(expr.Literal(45.67))
+        expr.Grouping(expr.Literal(45.67)),
     )
     print(AstPrinter().print(expression))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     execute_test()
