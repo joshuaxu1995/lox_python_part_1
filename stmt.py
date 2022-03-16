@@ -5,18 +5,13 @@ from expr import Expr, Variable
 from typing import List
 
 
-class StmtVisitor:
-    pass
-
-
 class Stmt(ABC):
     @abstractmethod
     def accept(self, visitor: StmtVisitor):
         ...
 
 
-class StmtVisitor():
-
+class StmtVisitor:
     @abstractmethod
     def visit_block_stmt(self, stmt):
         ...

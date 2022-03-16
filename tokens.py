@@ -43,7 +43,7 @@ class TokenType(Enum):
     EOF = 39
 
 
-class Token():
+class Token:
     def __init__(self, type: TokenType, lexeme: str, literal, line: int):
         self.type = type
         self.lexeme = lexeme
@@ -51,4 +51,4 @@ class Token():
         self.line = line
 
     def __repr__(self) -> str:
-        return f'{self.type} {self.lexeme} {self.literal}'
+        return f"{self.type} {self.lexeme} {self.literal}"

@@ -14,7 +14,7 @@ def create_types():
     }
     for ast_type, fields in ast_types.items():
         result = type(ast_type, (Expr,), fields)
-        print(f'Printing result: {result}')
+        print(f"Printing result: {result}")
 
 
 create_types()

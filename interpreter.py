@@ -15,7 +15,6 @@ import time
 
 
 class Interpreter(expr.Visitor, stmt.StmtVisitor):
-
     def __init__(self):
         self.globals = environment.Environment()
         self.environment = self.globals
@@ -23,13 +22,13 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
         self.locals = {}
 
     class ClockLoxCallable(LoxCallable):
-        def call(interpreter: Interpreter, arguments: List[Any]) -> Any:
+        def call(self, interpreter: Interpreter, arguments: List[Any]) -> Any:
             return round(time.time() * 1000)
 
-        def arity() -> int:
+        def arity(self) -> int:
             return 0
 
-        def to_string() -> str:
+        def __repr__(self) -> str:
             return "clock: <native fn>"
 
     def define_clock(self):
@@ -40,7 +39,7 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
             for statement in statements:
                 self.execute(statement)
         except RuntimeError as e:
-            main_scanner.runtime_error(e)
+            main_scanner.lox_runtime_error(e)
 
     def execute(self, stmt: stmt.Stmt) -> None:
         stmt.accept(self)
@@ -48,7 +47,9 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
     def resolve(self, expr: expr.Expr, depth: int) -> None:
         self.locals[expr] = depth
 
-    def execute_block(self, statements: List[stmt.Stmt], environment: environment.Environment) -> None:
+    def execute_block(
+        self, statements: List[stmt.Stmt], environment: environment.Environment
+    ) -> None:
         previous = self.environment
         try:
             self.environment = environment
@@ -62,9 +63,9 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
 
     def parenthesize(self, name: str, *expr_args) -> str:
         output_str_list = []
-        output_str_list.append(f'({name}')
+        output_str_list.append(f"({name}")
         for temp_expr in expr_args:
-            output_str_list.append(f' {temp_expr.accept(self)}')
+            output_str_list.append(f" {temp_expr.accept(self)}")
         output_str_list.append(")")
         return "".join(output_str_list)
 
@@ -84,70 +85,71 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
 
     def visit_return_stmt(self, stmt: stmt.Return) -> None:
         value = None
-        if (stmt.value != None):
+        if stmt.value is not None:
             value = self.evaluate(stmt.value)
 
         raise return_exception_type.Return(value)
 
     def visit_block_stmt(self, stmt: stmt.Block) -> None:
-        self.execute_block(
-            stmt.statements, environment.Environment(self.environment))
+        self.execute_block(stmt.statements, environment.Environment(self.environment))
         return None
 
     def visit_class_stmt(self, stmt: stmt.Class) -> None:
         superclass = None
-        if (stmt.superclass is not None):
+        if stmt.superclass is not None:
             superclass = self.evaluate(stmt.superclass)
             if not isinstance(superclass, LoxClass):
-                raise runtime_error.RuntimeError(stmt.superclass.name,
-                    "Superclass must be a class.")
-
+                raise runtime_error.RuntimeError(
+                    stmt.superclass.name, "Superclass must be a class."
+                )
 
         self.environment.define(stmt.name.lexeme, None)
 
-        if (stmt.superclass is not None):
+        if stmt.superclass is not None:
             self.environment = environment.Environment(self.environment)
             self.environment.define("super", superclass)
 
         methods = {}
         for method in stmt.methods:
-            temp_function = LoxFunction(method, self.environment, method.name.lexeme == "init")
+            temp_function = LoxFunction(
+                method, self.environment, method.name.lexeme == "init"
+            )
             methods[method.name.lexeme] = temp_function
-        
+
         klass = LoxClass(stmt.name.lexeme, superclass, methods)
 
-        if (superclass is not None):
+        if superclass is not None:
             self.environment = self.environment.enclosing
 
         self.environment.assign(stmt.name, klass)
 
     def visit_if_stmt(self, stmt: stmt.If) -> None:
-        if (self.is_truthy(self.evaluate(stmt.condition))):
+        if self.is_truthy(self.evaluate(stmt.condition)):
             self.execute(stmt.thenBranch)
-        elif (stmt.elseBranch is not None):
+        elif stmt.elseBranch is not None:
             self.execute(stmt.elseBranch)
         else:
             return None
 
     def visit_while_stmt(self, stmt: stmt.While) -> None:
-        while (self.is_truthy(self.evaluate(stmt.condition))):
+        while self.is_truthy(self.evaluate(stmt.condition)):
             self.execute(stmt.body)
         return None
 
     def visit_var_stmt(self, stmt: stmt.Var) -> None:
         value = None
-        if (stmt.initializer != None):
+        if stmt.initializer is not None:
             value = self.evaluate(stmt.initializer)
         self.environment.define(stmt.name.lexeme, value)
         return None
 
     def visit_logical_expr(self, expr: expr.Logical):
         left = self.evaluate(expr.left)
-        if (expr.operator.type == ts.TokenType.OR):
-            if (self.is_truthy(left)):
+        if expr.operator.type == ts.TokenType.OR:
+            if self.is_truthy(left):
                 return left
         else:
-            if (not self.is_truthy(left)):
+            if not self.is_truthy(left):
                 return left
 
         return self.evaluate(expr.right)
@@ -156,7 +158,7 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
         value = self.evaluate(expr.value)
 
         distance = self.locals.get(expr)
-        if (distance is not None):
+        if distance is not None:
             self.environment.assign_at(distance, expr.name, value)
         else:
             self.globals.assign(expr.name, value)
@@ -168,7 +170,7 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
 
     def look_up_variable(self, name: ts.Token, expr: expr.Expr) -> Any:
         distance = self.locals.get(expr)
-        if (distance != None):
+        if distance is not None:
             return self.environment.get_at(distance, name)
         else:
             return self.globals.get(name)
@@ -177,7 +179,7 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
         left = self.evaluate(expr.left)
         right = self.evaluate(expr.right)
 
-        if (expr.operator.type == ts.TokenType.GREATER):
+        if expr.operator.type == ts.TokenType.GREATER:
             self.check_number_operands(expr.operator, left, right)
             return float(left) > float(right)
         elif expr.operator.type == ts.TokenType.GREATER_EQUAL:
@@ -205,13 +207,15 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
             self.check_number_operands(expr.operator, left, right)
             return float(left) * float(right)
         elif expr.operator.type == ts.TokenType.PLUS:
-            if (isinstance(left, float) or isinstance(left, int)) \
-                    and (isinstance(right, float) or isinstance(right, int)):
+            if (isinstance(left, float) or isinstance(left, int)) and (
+                isinstance(right, float) or isinstance(right, int)
+            ):
                 return float(left) + float(right)
             elif isinstance(left, str) and isinstance(right, str):
                 return left + right
             raise runtime_error.RuntimeError(
-                expr.operator, "Operands must be two numbers or two strings")
+                expr.operator, "Operands must be two numbers or two strings"
+            )
 
     def visit_call_expr(self, expr: expr.Call) -> Any:
         callee = self.evaluate(expr.callee)
@@ -221,21 +225,24 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
 
         temp_function = callee
 
-        if (len(arguments) != temp_function.arity()):
+        if len(arguments) != temp_function.arity():
             raise runtime_error.RuntimeError(
-                expr.paren, f'Expected {temp_function.arity()} arguments but got {len(arguments)}.')
+                expr.paren,
+                f"Expected {temp_function.arity()} arguments but got {len(arguments)}.",
+            )
 
-        if (not isinstance(callee, LoxCallable)):
+        if not isinstance(callee, LoxCallable):
             raise runtime_error.RuntimeError(
-                expr.paren, "can only call functions and classes.")
+                expr.paren, "can only call functions and classes."
+            )
 
         return temp_function.call(self, arguments)
-    
+
     def visit_get_expr(self, expr: expr.Get) -> Any:
         object = self.evaluate(expr.object)
         if isinstance(object, LoxInstance):
             return object.get(expr.name)
-        
+
         raise runtime_error.RuntimeError(expr.name, "Only instances have properties.")
 
     def is_equal(self, a, b) -> bool:
@@ -260,27 +267,33 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
 
     def visit_literal_expr(self, expr: expr.Literal) -> str:
         return expr.value
-    
+
     def visit_set_expr(self, expr: expr.Set) -> Any:
         object = self.evaluate(expr.object)
         if not isinstance(object, LoxInstance):
             raise runtime_error.RuntimeError(expr.name, "Only instances have fields.")
-        
+
         value = self.evaluate(expr.value)
         object.set(expr.name, value)
 
     def visit_super_expr(self, expr: expr.Super) -> Any:
         distance = self.locals.get(expr)
-        superclass = self.environment.get_at(distance, ts.Token(ts.TokenType.SUPER, "super", "DUMMY", -1))
+        superclass = self.environment.get_at(
+            distance, ts.Token(ts.TokenType.SUPER, "super", "DUMMY", -1)
+        )
 
-        object = self.environment.get_at(distance - 1, ts.Token(ts.TokenType.THIS, "this", "DUMMY", -1))
+        object = self.environment.get_at(
+            distance - 1, ts.Token(ts.TokenType.THIS, "this", "DUMMY", -1)
+        )
         method = superclass.find_method(expr.method.lexeme)
 
         if method is None:
-            raise runtime_error.RuntimeError(expr.method, "Undefined property '" + expr.method.lexeme + "'.")
+            raise runtime_error.RuntimeError(
+                expr.method, "Undefined property '" + expr.method.lexeme + "'."
+            )
 
         return method.bind(object)
-    
+
     def visit_this_expr(self, expr: expr.This) -> Any:
         return self.look_up_variable(expr.keyword, expr)
 
@@ -300,8 +313,12 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
         raise runtime_error.RuntimeError(operator, "Operand must be a number")
 
     def check_number_operands(self, operator: ts.Token, left, right):
-        if isinstance(left, int) or isinstance(left, float) and \
-                isinstance(right, int) or isinstance(right, float):
+        if (
+            isinstance(left, int)
+            or isinstance(left, float)
+            and isinstance(right, int)
+            or isinstance(right, float)
+        ):
             return
         raise runtime_error.RuntimeError(operator, "Operands must be numbers")
 
