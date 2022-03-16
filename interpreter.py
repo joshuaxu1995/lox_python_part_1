@@ -22,13 +22,13 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
         self.locals = {}
 
     class ClockLoxCallable(LoxCallable):
-        def call(interpreter: Interpreter, arguments: List[Any]) -> Any:
+        def call(self, interpreter: Interpreter, arguments: List[Any]) -> Any:
             return round(time.time() * 1000)
 
-        def arity() -> int:
+        def arity(self) -> int:
             return 0
 
-        def to_string() -> str:
+        def __repr__(self) -> str:
             return "clock: <native fn>"
 
     def define_clock(self):

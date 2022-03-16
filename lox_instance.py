@@ -24,7 +24,7 @@ class LoxInstance:
             return method.bind(self)
 
         raise runtime_error.RuntimeError(
-            self.name, "Undefined property '" + name.lexeme + "'."
+            name, "Undefined property '" + name.lexeme + "'."
         )
 
     def set(self, name: ts.Token, value: Any) -> Any:
