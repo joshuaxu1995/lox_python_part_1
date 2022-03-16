@@ -39,7 +39,7 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
             for statement in statements:
                 self.execute(statement)
         except RuntimeError as e:
-            main_scanner.runtime_error(e)
+            main_scanner.lox_runtime_error(e)
 
     def execute(self, stmt: stmt.Stmt) -> None:
         stmt.accept(self)

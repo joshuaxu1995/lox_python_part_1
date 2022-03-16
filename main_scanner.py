@@ -78,7 +78,7 @@ def error(token: ts.Token, message: str):
         report(token.line, " at '" + token.lexeme + "'", message)
 
 
-def runtime_error(error: runtime_error.RuntimeError):
+def lox_runtime_error(error: runtime_error.RuntimeError):
     sys.stderr.write(f"{error.message} \n[line {error.token.line}]")
     had_runtime_error = True
 

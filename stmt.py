@@ -5,10 +5,6 @@ from expr import Expr, Variable
 from typing import List
 
 
-class StmtVisitor:
-    pass
-
-
 class Stmt(ABC):
     @abstractmethod
     def accept(self, visitor: StmtVisitor):

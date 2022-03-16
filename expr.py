@@ -1,10 +1,7 @@
+from __future__ import annotations
 from abc import ABC, abstractmethod
 from tokens import Token
 from typing import List
-
-
-class Visitor:
-    pass
 
 
 class Expr(ABC):
