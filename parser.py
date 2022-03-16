@@ -195,7 +195,7 @@ class Parser:
                 name = temp_expr.name
                 return expr.Assign(name, value)
 
-            if isinstance(temp_expr, expr.Set):
+            elif isinstance(temp_expr, expr.Get):
                 get_expr = temp_expr
                 return expr.Set(get_expr, get_expr.name, value)
 
