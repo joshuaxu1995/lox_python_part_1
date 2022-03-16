@@ -46,11 +46,10 @@ class Visitor():
     @abstractmethod
     def visit_set_expr(self, expr):
         ...
-    
+
     @abstractmethod
     def visit_super_expr(self, expr):
         ...
-
 
     @abstractmethod
     def visit_this_expr(self, expr):
@@ -145,6 +144,7 @@ class This(Expr):
 
     def accept(self, visitor: Visitor):
         return visitor.visit_this_expr(self)
+
 
 class Unary(Expr):
     def __init__(self, operator: Token, right: Expr):

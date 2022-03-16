@@ -35,7 +35,7 @@ def run_file(path: str):
 def run_prompt():
     while True:
         data = input("> ")
-        if data == None:
+        if data is None:
             break
         run(data)
         hadError = False

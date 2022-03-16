@@ -121,7 +121,7 @@ class Scanner:
 
         text = self.source[self.start: self.current]
         type = Scanner.keywords.get(text, None)
-        if (type == None):
+        if (type is None):
             type = TokenType.IDENTIFIER
         self.add_token(type)
 

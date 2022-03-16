@@ -21,7 +21,7 @@ class AstPrinter(expr.Visitor):
         return self.parenthesize("group", expr.expression)
 
     def visit_literal_expr(self, expr: expr.Literal) -> str:
-        if (expr.value == None):
+        if (expr.value is None):
             return None
         return expr.value
 

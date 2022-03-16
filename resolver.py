@@ -15,10 +15,12 @@ class FunctionType(enum.Enum):
     INITIALIZER = 2
     METHOD = 3
 
+
 class ClassType(enum.Enum):
     NONE = 0
     SUBCLASS = 1
     CLASS = 1
+
 
 class Resolver(expr.Visitor, stmt.StmtVisitor):
 
@@ -33,7 +35,7 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
         self.resolve(stmt.statements)
         self.end_scope()
         return None
-    
+
     def visit_class_stmt(self, stmt: stmt.Class) -> None:
         enclosing_class = self.current_class
         self.current_class = ClassType.CLASS
@@ -41,13 +43,16 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
         self.declare(stmt.name)
         self.define(stmt.name)
 
-        if (stmt.superclass is not None and stmt.name.lexeme == stmt.superclass.name.lexeme):
-            main_scanner.error(stmt.superclass.name, "A class can't inherit from itself.")
+        if (stmt.superclass is not None and stmt.name.lexeme ==
+                stmt.superclass.name.lexeme):
+            main_scanner.error(
+                stmt.superclass.name,
+                "A class can't inherit from itself.")
 
         if (stmt.superclass is not None):
             self.current_class = ClassType.SUBCLASS
             self.resolve_expr(stmt.superclass)
-        
+
         if (stmt.superclass is not None):
             self.begin_scope()
             self.scopes[-1]["super"] = True
@@ -61,9 +66,9 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
                 declaration = FunctionType.INITIALIZER
 
             self.resolve_function(method, declaration)
-    
+
         self.end_scope()
-    
+
         if (stmt.superclass is not None):
             self.end_scope()
 
@@ -91,7 +96,8 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
 
         if (stmt.value is not None):
             if (self.current_function == FunctionType.INITIALIZER):
-                main_scanner.error(stmt.keyword, "Can't return a value from an initializer.")
+                main_scanner.error(stmt.keyword,
+                                   "Can't return a value from an initializer.")
             self.resolve_expr(stmt.value)
         return None
 
@@ -109,7 +115,7 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
         for argument in expr.arguments:
             self.resolve_expr(argument)
         self.resolve_expr(expr.callee)
-    
+
     def visit_get_expr(self, expr: expr.Get):
         self.resolve_expr(expr.object)
         return None
@@ -130,19 +136,23 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
         self.resolve_expr(expr.value)
         self.resolve_expr(expr.object)
         return None
-    
+
     def visit_super_expr(self, expr: expr.Super):
         if (self.current_class is ClassType.NONE):
-            main_scanner.error(expr.keyword, "Can't use 'super' outside of a class.")
+            main_scanner.error(expr.keyword,
+                               "Can't use 'super' outside of a class.")
         elif (self.current_class is not ClassType.SUBCLASS):
-            main_scanner.error(expr.keyword, "Can't use 'super' in a class with no superclass.")
+            main_scanner.error(
+                expr.keyword,
+                "Can't use 'super' in a class with no superclass.")
 
         self.resolve_local(expr, expr.keyword)
         return None
 
     def visit_this_expr(self, expr: expr.This):
         if (self.current_class is ClassType.NONE):
-            main_scanner.error(expr.keyword, "Can't use 'this' outside of a class.")
+            main_scanner.error(expr.keyword,
+                               "Can't use 'this' outside of a class.")
             return None
 
         self.resolve_local(expr, expr.keyword)
@@ -154,7 +164,7 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
 
     def visit_var_stmt(self, stmt: stmt.Var) -> None:
         self.declare(stmt.name)
-        if (stmt.initializer != None):
+        if (stmt.initializer is not None):
             self.resolve_expr(stmt.initializer)
         self.define(stmt.name)
         return None
@@ -188,7 +198,10 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
     def resolve_expr(self, expr: expr.Expr) -> None:
         expr.accept(self)
 
-    def resolve_function(self, func: stmt.Function, type: FunctionType) -> None:
+    def resolve_function(
+            self,
+            func: stmt.Function,
+            type: FunctionType) -> None:
         enclosing_function = self.current_function
         self.current_function = type
 

@@ -48,7 +48,9 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
     def resolve(self, expr: expr.Expr, depth: int) -> None:
         self.locals[expr] = depth
 
-    def execute_block(self, statements: List[stmt.Stmt], environment: environment.Environment) -> None:
+    def execute_block(self,
+                      statements: List[stmt.Stmt],
+                      environment: environment.Environment) -> None:
         previous = self.environment
         try:
             self.environment = environment
@@ -84,7 +86,7 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
 
     def visit_return_stmt(self, stmt: stmt.Return) -> None:
         value = None
-        if (stmt.value != None):
+        if (stmt.value is not None):
             value = self.evaluate(stmt.value)
 
         raise return_exception_type.Return(value)
@@ -100,8 +102,7 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
             superclass = self.evaluate(stmt.superclass)
             if not isinstance(superclass, LoxClass):
                 raise runtime_error.RuntimeError(stmt.superclass.name,
-                    "Superclass must be a class.")
-
+                                                 "Superclass must be a class.")
 
         self.environment.define(stmt.name.lexeme, None)
 
@@ -111,9 +112,10 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
 
         methods = {}
         for method in stmt.methods:
-            temp_function = LoxFunction(method, self.environment, method.name.lexeme == "init")
+            temp_function = LoxFunction(
+                method, self.environment, method.name.lexeme == "init")
             methods[method.name.lexeme] = temp_function
-        
+
         klass = LoxClass(stmt.name.lexeme, superclass, methods)
 
         if (superclass is not None):
@@ -136,7 +138,7 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
 
     def visit_var_stmt(self, stmt: stmt.Var) -> None:
         value = None
-        if (stmt.initializer != None):
+        if (stmt.initializer is not None):
             value = self.evaluate(stmt.initializer)
         self.environment.define(stmt.name.lexeme, value)
         return None
@@ -168,7 +170,7 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
 
     def look_up_variable(self, name: ts.Token, expr: expr.Expr) -> Any:
         distance = self.locals.get(expr)
-        if (distance != None):
+        if (distance is not None):
             return self.environment.get_at(distance, name)
         else:
             return self.globals.get(name)
@@ -223,20 +225,22 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
 
         if (len(arguments) != temp_function.arity()):
             raise runtime_error.RuntimeError(
-                expr.paren, f'Expected {temp_function.arity()} arguments but got {len(arguments)}.')
+                expr.paren,
+                f'Expected {temp_function.arity()} arguments but got {len(arguments)}.')
 
         if (not isinstance(callee, LoxCallable)):
             raise runtime_error.RuntimeError(
                 expr.paren, "can only call functions and classes.")
 
         return temp_function.call(self, arguments)
-    
+
     def visit_get_expr(self, expr: expr.Get) -> Any:
         object = self.evaluate(expr.object)
         if isinstance(object, LoxInstance):
             return object.get(expr.name)
-        
-        raise runtime_error.RuntimeError(expr.name, "Only instances have properties.")
+
+        raise runtime_error.RuntimeError(
+            expr.name, "Only instances have properties.")
 
     def is_equal(self, a, b) -> bool:
         if a is None or b is None:
@@ -260,27 +264,32 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
 
     def visit_literal_expr(self, expr: expr.Literal) -> str:
         return expr.value
-    
+
     def visit_set_expr(self, expr: expr.Set) -> Any:
         object = self.evaluate(expr.object)
         if not isinstance(object, LoxInstance):
-            raise runtime_error.RuntimeError(expr.name, "Only instances have fields.")
-        
+            raise runtime_error.RuntimeError(
+                expr.name, "Only instances have fields.")
+
         value = self.evaluate(expr.value)
         object.set(expr.name, value)
 
     def visit_super_expr(self, expr: expr.Super) -> Any:
         distance = self.locals.get(expr)
-        superclass = self.environment.get_at(distance, ts.Token(ts.TokenType.SUPER, "super", "DUMMY", -1))
+        superclass = self.environment.get_at(
+            distance, ts.Token(
+                ts.TokenType.SUPER, "super", "DUMMY", -1))
 
-        object = self.environment.get_at(distance - 1, ts.Token(ts.TokenType.THIS, "this", "DUMMY", -1))
+        object = self.environment.get_at(
+            distance - 1, ts.Token(ts.TokenType.THIS, "this", "DUMMY", -1))
         method = superclass.find_method(expr.method.lexeme)
 
         if method is None:
-            raise runtime_error.RuntimeError(expr.method, "Undefined property '" + expr.method.lexeme + "'.")
+            raise runtime_error.RuntimeError(
+                expr.method, "Undefined property '" + expr.method.lexeme + "'.")
 
         return method.bind(object)
-    
+
     def visit_this_expr(self, expr: expr.This) -> Any:
         return self.look_up_variable(expr.keyword, expr)
 

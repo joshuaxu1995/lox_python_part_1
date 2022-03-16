@@ -35,7 +35,7 @@ class Parser():
         except self.ParseError as e:
             self.synchronize()
             return None
-    
+
     def class_declaration(self) -> stmt.Stmt:
         name = self.consume(ts.TokenType.IDENTIFIER, "Expect class name.")
 
@@ -47,9 +47,10 @@ class Parser():
         self.consume(ts.TokenType.LEFT_BRACE, "Expect '{' before class body.")
 
         methods = []
-        while (not self.check(ts.TokenType.RIGHT_BRACE) and not self.is_at_end()):
+        while (not self.check(ts.TokenType.RIGHT_BRACE)
+               and not self.is_at_end()):
             methods.append(self.function_declaration("method"))
-        
+
         self.consume(ts.TokenType.RIGHT_BRACE, "Expect '}' after class body.")
         return stmt.Class(name, superclass, methods)
 
@@ -169,7 +170,8 @@ class Parser():
     def block(self):
         statements = []
 
-        while (not self.check(ts.TokenType.RIGHT_BRACE) and not self.is_at_end()):
+        while (not self.check(ts.TokenType.RIGHT_BRACE)
+               and not self.is_at_end()):
             statements.append(self.declaration())
 
         self.consume(ts.TokenType.RIGHT_BRACE, "Expect '}' after block.")
@@ -198,7 +200,7 @@ class Parser():
             if isinstance(temp_expr, expr.Variable):
                 name = temp_expr.name
                 return expr.Assign(name, value)
-            
+
             if isinstance(temp_expr, expr.Set):
                 get_expr = temp_expr
                 return expr.Set(get_expr, get_expr.name, value)
@@ -300,7 +302,9 @@ class Parser():
             if self.match(ts.TokenType.LEFT_PAREN):
                 temp_expr = self.finish_call(temp_expr)
             elif self.match(ts.TokenType.DOT):
-                name = self.consume(ts.TokenType.IDENTIFIER, "Expect property name after '.'.")
+                name = self.consume(
+                    ts.TokenType.IDENTIFIER,
+                    "Expect property name after '.'.")
                 temp_expr = expr.Get(temp_expr, name)
             else:
                 break
@@ -331,13 +335,15 @@ class Parser():
 
         if (self.match(ts.TokenType.NUMBER, ts.TokenType.STRING)):
             return expr.Literal(self.previous().literal)
-        
+
         if (self.match(ts.TokenType.SUPER)):
             keyword = self.previous()
             self.consume(ts.TokenType.DOT, "Expect '.' after 'super'.")
-            method = self.consume(ts.TokenType.IDENTIFIER, "Expect superclass method name.")
+            method = self.consume(
+                ts.TokenType.IDENTIFIER,
+                "Expect superclass method name.")
             return expr.Super(keyword, method)
-        
+
         if (self.match(ts.TokenType.THIS)):
             return expr.This(self.previous())
 
