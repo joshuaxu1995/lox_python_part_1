@@ -197,7 +197,7 @@ class Parser:
 
             elif isinstance(temp_expr, expr.Get):
                 get_expr = temp_expr
-                return expr.Set(get_expr, get_expr.name, value)
+                return expr.Set(get_expr.object, get_expr.name, value)
 
             self.error(equals, "Invalid assignment target.")
         return temp_expr
