@@ -14,6 +14,18 @@ from typing import List, Optional, Any
 import time
 
 
+class ClockLoxCallable(LoxCallable):
+
+    def call(self, interpreter: Interpreter, arguments: List[Any]) -> Any:
+        return round(time.time())
+
+    def arity(self) -> int:
+        return 0
+
+    def to_string(self) -> str:
+        return "clock: <native fn>"
+
+
 class Interpreter(expr.Visitor, stmt.StmtVisitor):
     def __init__(self):
         self.globals = environment.Environment()
@@ -21,18 +33,8 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
         self.define_clock()
         self.locals = {}
 
-    class ClockLoxCallable(LoxCallable):
-        def call(self, interpreter: Interpreter, arguments: List[Any]) -> Any:
-            return round(time.time() * 1000)
-
-        def arity(self) -> int:
-            return 0
-
-        def __repr__(self) -> str:
-            return "clock: <native fn>"
-
     def define_clock(self):
-        self.globals.define("clock", self.ClockLoxCallable)
+        self.globals.define("clock", ClockLoxCallable)
 
     def interpret(self, statements: List[stmt.Stmt]):
         try:
@@ -231,7 +233,7 @@ class Interpreter(expr.Visitor, stmt.StmtVisitor):
                 f"Expected {temp_function.arity()} arguments but got {len(arguments)}.",
             )
 
-        if not isinstance(callee, LoxCallable):
+        if not isinstance(callee, LoxCallable) and not issubclass(callee, LoxCallable):
             raise runtime_error.RuntimeError(
                 expr.paren, "can only call functions and classes."
             )
