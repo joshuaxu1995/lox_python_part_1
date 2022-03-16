@@ -16,13 +16,13 @@ import time
 
 class ClockLoxCallable(LoxCallable):
 
-    def call(interpreter: Interpreter, arguments: List[Any]) -> Any:
+    def call(self, interpreter: Interpreter, arguments: List[Any]) -> Any:
         return round(time.time())
 
-    def arity() -> int:
+    def arity(self) -> int:
         return 0
 
-    def to_string() -> str:
+    def to_string(self) -> str:
         return "clock: <native fn>"
 
 
