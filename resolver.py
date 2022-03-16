@@ -15,13 +15,14 @@ class FunctionType(enum.Enum):
     INITIALIZER = 2
     METHOD = 3
 
+
 class ClassType(enum.Enum):
     NONE = 0
     SUBCLASS = 1
     CLASS = 1
 
-class Resolver(expr.Visitor, stmt.StmtVisitor):
 
+class Resolver(expr.Visitor, stmt.StmtVisitor):
     def __init__(self, interpreter: interpreter.Interpreter):
         self.interpreter = interpreter
         self.scopes = collections.deque()
@@ -33,7 +34,7 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
         self.resolve(stmt.statements)
         self.end_scope()
         return None
-    
+
     def visit_class_stmt(self, stmt: stmt.Class) -> None:
         enclosing_class = self.current_class
         self.current_class = ClassType.CLASS
@@ -41,14 +42,19 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
         self.declare(stmt.name)
         self.define(stmt.name)
 
-        if (stmt.superclass is not None and stmt.name.lexeme == stmt.superclass.name.lexeme):
-            main_scanner.error(stmt.superclass.name, "A class can't inherit from itself.")
+        if (
+            stmt.superclass is not None
+            and stmt.name.lexeme == stmt.superclass.name.lexeme
+        ):
+            main_scanner.error(
+                stmt.superclass.name, "A class can't inherit from itself."
+            )
 
-        if (stmt.superclass is not None):
+        if stmt.superclass is not None:
             self.current_class = ClassType.SUBCLASS
             self.resolve_expr(stmt.superclass)
-        
-        if (stmt.superclass is not None):
+
+        if stmt.superclass is not None:
             self.begin_scope()
             self.scopes[-1]["super"] = True
 
@@ -57,14 +63,14 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
 
         for method in stmt.methods:
             declaration = FunctionType.METHOD
-            if (method.name.lexeme == "init"):
+            if method.name.lexeme == "init":
                 declaration = FunctionType.INITIALIZER
 
             self.resolve_function(method, declaration)
-    
+
         self.end_scope()
-    
-        if (stmt.superclass is not None):
+
+        if stmt.superclass is not None:
             self.end_scope()
 
         self.current_class = enclosing_class
@@ -76,7 +82,7 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
     def visit_if_stmt(self, stmt: stmt.If):
         self.resolve_expr(stmt.condition)
         self.resolve_stmt(stmt.thenBranch)
-        if (stmt.elseBranch is not None):
+        if stmt.elseBranch is not None:
             self.resolve_stmt(stmt.elseBranch)
         return None
 
@@ -85,13 +91,14 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
         return None
 
     def visit_return_stmt(self, stmt: stmt.Return):
-        if (self.current_function == FunctionType.NONE):
-            main_scanner.error(
-                stmt.keyword, "Can't return from top-level code.")
+        if self.current_function == FunctionType.NONE:
+            main_scanner.error(stmt.keyword, "Can't return from top-level code.")
 
-        if (stmt.value is not None):
-            if (self.current_function == FunctionType.INITIALIZER):
-                main_scanner.error(stmt.keyword, "Can't return a value from an initializer.")
+        if stmt.value is not None:
+            if self.current_function == FunctionType.INITIALIZER:
+                main_scanner.error(
+                    stmt.keyword, "Can't return a value from an initializer."
+                )
             self.resolve_expr(stmt.value)
         return None
 
@@ -109,7 +116,7 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
         for argument in expr.arguments:
             self.resolve_expr(argument)
         self.resolve_expr(expr.callee)
-    
+
     def visit_get_expr(self, expr: expr.Get):
         self.resolve_expr(expr.object)
         return None
@@ -130,18 +137,20 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
         self.resolve_expr(expr.value)
         self.resolve_expr(expr.object)
         return None
-    
+
     def visit_super_expr(self, expr: expr.Super):
-        if (self.current_class is ClassType.NONE):
+        if self.current_class is ClassType.NONE:
             main_scanner.error(expr.keyword, "Can't use 'super' outside of a class.")
-        elif (self.current_class is not ClassType.SUBCLASS):
-            main_scanner.error(expr.keyword, "Can't use 'super' in a class with no superclass.")
+        elif self.current_class is not ClassType.SUBCLASS:
+            main_scanner.error(
+                expr.keyword, "Can't use 'super' in a class with no superclass."
+            )
 
         self.resolve_local(expr, expr.keyword)
         return None
 
     def visit_this_expr(self, expr: expr.This):
-        if (self.current_class is ClassType.NONE):
+        if self.current_class is ClassType.NONE:
             main_scanner.error(expr.keyword, "Can't use 'this' outside of a class.")
             return None
 
@@ -154,15 +163,16 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
 
     def visit_var_stmt(self, stmt: stmt.Var) -> None:
         self.declare(stmt.name)
-        if (stmt.initializer != None):
+        if stmt.initializer is not None:
             self.resolve_expr(stmt.initializer)
         self.define(stmt.name)
         return None
 
     def visit_variable_expr(self, expr: expr.Variable) -> None:
-        if (self.scopes and self.scopes[-1].get(expr.name.lexeme) == False):
+        if self.scopes and self.scopes[-1].get(expr.name.lexeme) == False:
             main_scanner.error(
-                expr.name, "Can't read local variable in its own initializer.")
+                expr.name, "Can't read local variable in its own initializer."
+            )
 
         self.resolve_local(expr, expr.name)
         return None
@@ -208,18 +218,17 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
         self.scopes.pop()
 
     def declare(self, name: Token) -> None:
-        if (not len(self.scopes)):
+        if not len(self.scopes):
             return
         curr_scope = self.scopes[-1]
 
-        if (name.lexeme in curr_scope):
-            main_scanner.error(
-                name, "Already a variable with this name in the scope")
+        if name.lexeme in curr_scope:
+            main_scanner.error(name, "Already a variable with this name in the scope")
 
         curr_scope[name.lexeme] = False
 
     def define(self, name: Token) -> None:
-        if (not len(self.scopes)):
+        if not len(self.scopes):
             return
         self.scopes[-1][name.lexeme] = True
 

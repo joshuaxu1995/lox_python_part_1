@@ -4,9 +4,9 @@ from typing import Any, List
 
 class LoxCallable(ABC):
     @abstractmethod
-    def call(interpreter, arguments: List[Any]):
+    def call(self, interpreter, arguments: List[Any]):
         ...
 
     @abstractmethod
-    def arity() -> int:
+    def arity(self) -> int:
         ...
