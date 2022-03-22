@@ -158,7 +158,7 @@ class Resolver(expr.Visitor, stmt.StmtVisitor):
         return None
 
     def visit_unary_expr(self, expr: expr.Unary):
-        self.resolve(expr.right)
+        self.resolve_expr(expr.right)
         return None
 
     def visit_var_stmt(self, stmt: stmt.Var) -> None:
